@@ -1,0 +1,26 @@
+# Data processing 
+numpy
+pandas
+# scipy
+# mne
+
+# Deep leaning 
+# torch
+# torchvision
+
+# Transformers 
+# transformers
+
+# Experiment tracking 
+# mlflow
+
+# API serving 
+fastapi
+uvicorn
+websockets
+python-multipart
+
+# Utilities 
+tqdm
+matplotlib
+# scikit-learn
