@@ -1,8 +1,8 @@
 # Data processing 
 numpy
 pandas
-# scipy
-# mne
+scipy
+mne
 
 # Deep leaning 
 # torch
