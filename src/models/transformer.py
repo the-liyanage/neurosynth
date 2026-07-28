@@ -137,3 +137,81 @@ class EEGTransformer(nn.Module):
 
     
     """
+    def __init__(
+        self,
+        in_channels = IN_CHANNELS,
+        conv_out = CONV_OUT,
+        d_model = D_MODEL,
+        nhead = NHEAD,
+        num_layers = NUM_LAYERS,
+        num_classes = NUM_CLASSES
+    ):
+        super().__init__()
+        
+        # 1.0 multi-scale CNN
+        self.multi_sclae_conv = MultiScaleConv(
+            in_channels = in_channels,
+            out_channels = conv_out
+        )
+        
+        # 2.0 transformer encoder
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model = d_model,
+            nhead = nhead,
+            dim_feedforward = DIM_FEEDFORWARD,
+            batch_first = True,
+            dropout = DROPOUT
+        )
+        
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers = num_layers
+        )
+        
+        # 3.0 classification head
+        self.head = ClassificationHead(
+            d_model = d_model,
+            num_classes = num_classes
+        )
+        
+    def forward(self, X):
+        x = self.multi_sclae_conv(x)    # local pattern extraction
+        x = self.transformer(x)         # global relationship detection
+        x = self.head(x)                # classify left or right
+        
+        
+        
+def load_model(model_path, config_path = None, device = None):
+    """
+    loads the trained EEGTransformer from saved weights.
+    used by the serving layer (predict.py) to load the model once
+    at server startup.
+    then reusing for all incoming inference requests.
+    
+    """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+    # build the model architecture
+    model = EEGTransformer()
+    
+    # load the trained weights into the architecture 
+    # map_location ensures weights load correctly
+    # regardless of whether they were saved on GPU or CPU
+    model.load_state_dict(
+        torch.load(model_path, map_location = device)
+        
+        
+    )
+    
+    # set to evaluation mode
+    # this disables dropout (which only runs during training)
+    # so predictions are consistent and deterministic
+    model.eval()
+    model.to(device)
+    
+    print(f"Model loaded from {model_path}")
+    print(f"Running on: {device}")
+    
+    return model, device        
+    
