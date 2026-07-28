@@ -149,7 +149,7 @@ class EEGTransformer(nn.Module):
         super().__init__()
         
         # 1.0 multi-scale CNN
-        self.multi_sclae_conv = MultiScaleConv(
+        self.multi_scale_conv = MultiScaleConv(
             in_channels = in_channels,
             out_channels = conv_out
         )
@@ -174,10 +174,12 @@ class EEGTransformer(nn.Module):
             num_classes = num_classes
         )
         
-    def forward(self, X):
-        x = self.multi_sclae_conv(x)    # local pattern extraction
+    def forward(self, x):
+        x = self.multi_scale_conv(x)    # local pattern extraction
         x = self.transformer(x)         # global relationship detection
         x = self.head(x)                # classify left or right
+        
+        return x
         
         
         
