@@ -1,14 +1,14 @@
 
 # EEG data
-data/raw
-data/processed 
+data/raw/
+data/processed/ 
 
 # Model artifacts
 artifacts/
 *.pth 
 
 # Python
-__pycache__
+__pycache__/
 *.pyc 
 
 # Jupyter
