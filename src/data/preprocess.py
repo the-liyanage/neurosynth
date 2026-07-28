@@ -162,7 +162,7 @@ def preprocess_raw_signal(raw):
 
 
 # full pipeline for training data
-def run_preprocessing():
+def run_preprocessing(subjects, runs, data_dir):
     """
     Complete EEG preprocessing pipeline.
 
@@ -278,13 +278,12 @@ def run_preprocessing():
     )
     
         
-    if __name__ == "__main__":
-
+if __name__ == "__main__":
     # Run the preprocessing pipeline
-        X, y, subject_ids = run_preprocessing(
-            SUBJECTS,
-            RUNS,
-            DATA_DIR
+    X, y, subject_ids = run_preprocessing(
+        SUBJECTS,
+        RUNS,
+        RAW_DATA_DIR
     )
 
     # Save processed arrays for training
