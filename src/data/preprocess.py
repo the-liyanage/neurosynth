@@ -7,14 +7,14 @@ from tqdm import tqdm
 
 
 from config import (
-    DATA_DIR,
+    RAW_DATA_DIR,
     PROCESSED_DATA_DIR,
     SUBJECTS,
     RUNS,
     FREQ_LOW,
-    FREG_HIGH,
+    FREQ_HIGH,
     EPOCH_TMIN,
-    EPPOCH_TMAX,
+    EPOCH_TMAX,
     EVENT_ID
 )
 
@@ -66,8 +66,8 @@ def apply_car(raw):
     
     """
     raw_car = raw.copy()
-    raw.set_eeg_reference("average", verbose = False)
-    return raw
+    raw_car.set_eeg_reference("average", verbose = False)
+    return raw_car
 
 
 # applying bandpass filter
@@ -82,7 +82,7 @@ def apply_bandpass_filter(raw):
     """
     raw.filter(
         l_freq = FREQ_LOW,
-        h_freq = FREG_HIGH,
+        h_freq = FREQ_HIGH,
         # a filter (mathematical way)
         method = "iir",
         verbose = False
@@ -111,7 +111,7 @@ def extract_epochs(raw):
         events,
         event_id = EVENT_ID,
         tmin = EPOCH_TMIN,
-        tmax = EPPOCH_TMAX,
+        tmax = EPOCH_TMAX,
         baseline = None,
         preload = True,
         verbose = False
