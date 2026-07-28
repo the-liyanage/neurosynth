@@ -1,3 +1,20 @@
+
+# EEG data
+data/raw
+data/processed 
+
+# Model artifacts
+artifacts/
+*.pth 
+
+# Python
+__pycache__
+*.pyc 
+
+# Jupyter
+.ipynb_checkpoints
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
