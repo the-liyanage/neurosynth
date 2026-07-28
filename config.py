@@ -43,11 +43,11 @@ N_CHANNELS              = 64
 # Preprocessing
 FREQ_LOW                = 8.0
 
-FREG_HIGH               = 30.0
+FREQ_HIGH               = 30.0
 
 EPOCH_TMIN              = 0.0
 
-EPPOCH_TMAX             = 4.0
+EPOCH_TMAX             = 4.0
 
 EVENT_ID                = {
     "T1": 1,
