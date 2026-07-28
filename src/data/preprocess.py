@@ -162,8 +162,134 @@ def preprocess_raw_signal(raw):
 
 
 # full pipeline for training data
+def run_preprocessing():
+    """
+    Complete EEG preprocessing pipeline.
 
+    Loads all subjects,
+    applies preprocessing steps,
+    extracts epochs,
+    normalizes data,
+    and returns processed arrays.
+    """
+
+    all_X = []
+    all_y = []
+    all_subject_ids = []
+
+
+    print("Starting preprocessing pipeline...\n")
+
+
+    for subject in tqdm(
+        SUBJECTS,
+        desc="Processing subjects"
+    ):
+
+        print(f"\nSubject {subject}")
+
+
+        # 1. Load EEG data
+        raw = load_subject(
+            subject,
+            RUNS,
+            RAW_DATA_DIR
+        )
+
+
+        # 2. Common Average Reference
+        raw = apply_car(raw)
+
+
+        # 3. Band-pass filtering
+        raw = apply_bandpass_filter(raw)
+
+
+        # 4. Extract epochs and labels
+        X, y = extract_epochs(raw)
+
+
+        # Check if subject produced enough data
+        if len(X) < 5:
+            print(
+                f"Skipping subject {subject}: too few epochs"
+            )
+            continue
+
+
+        # 5. Normalize EEG signals
+        X = normalize(X)
+
+
+        # Store results
+        all_X.append(X)
+        all_y.append(y)
+
+
+        # IMPORTANT:
+        # keep track of which subject produced each epoch
+
+        subject_ids = np.full(
+            len(y),
+            subject
+        )
+
+        all_subject_ids.append(subject_ids)
+
+
+        print(
+            f"Subject {subject}: "
+            f"{X.shape[0]} epochs"
+        )
+
+
+
+    # Combine all subjects together
+
+    all_X = np.concatenate(
+        all_X,
+        axis=0
+    )
+
+    all_y = np.concatenate(
+        all_y,
+        axis=0
+    )
+
+    all_subject_ids = np.concatenate(
+        all_subject_ids,
+        axis=0
+    )
+
+
+    print("\nPreprocessing complete!")
+    print("---------------------------")
+    print(f"X shape: {all_X.shape}")
+    print(f"y shape: {all_y.shape}")
+    print(
+        f"subject_ids shape: {all_subject_ids.shape}"
+    )
+
+
+    return (
+        all_X,
+        all_y,
+        all_subject_ids
+    )
     
         
-    
-    
+    if __name__ == "__main__":
+
+    # Run the preprocessing pipeline
+        X, y, subject_ids = run_preprocessing(
+            SUBJECTS,
+            RUNS,
+            DATA_DIR
+    )
+
+    # Save processed arrays for training
+    np.save(PROCESSED_DATA_DIR / "X.npy", X)
+    np.save(PROCESSED_DATA_DIR / "y.npy", y)
+    np.save(PROCESSED_DATA_DIR / "subject_ids.npy", subject_ids)
+
+    print("\nProcessed data saved successfully!")
