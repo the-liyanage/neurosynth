@@ -85,6 +85,55 @@ class MultiScaleConv(nn.Module):
 class ClassificationHead(nn.Module):
     """
     Converts Transformer features into final class predictions.
+    
+    input:
+        (batch, time, features)
+        
+    output:
+        (batch, number_of_classes)
+        
     """
     
+    def __init__(
+        self,
+        d_model = D_MODEL,
+        num_classes = NUM_CLASSES
+    ):
+        
+        super().__init__()
+        
+        self.linear = nn.Linear(
+            d_model,
+            num_classes
+        )
+        
+    def forward(self, x):
+         # x shape:
+         # (batch, time, features)
+         # eg: (16, 641, 96)
+         x = x.mean(dim = 1)
+         
+         # now
+         # (16, 96)
+         
+         x = self.linear(x)
+         
+         # now:
+         # (16, 2)
+         return x
     
+    
+class EEGTransformer(nn.Module):
+    """
+    Complete end-to-end EEG classification pipeline.
+
+    Input:  (batch, 641, 64) — EEG signal, time-first
+    Output: (batch, 2)       — left/right class scores
+
+    Pipeline:
+        MultiScaleConv     → (batch, 641, 96)  local patterns
+        TransformerEncoder → (batch, 641, 96)  global relationships
+        ClassificationHead → (batch, 2)        final decision
+
+    
+    """
