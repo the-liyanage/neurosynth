@@ -44,5 +44,30 @@ app.add_middleware(
 # coming IN and going OUT of our API endpoints
 # FastAPI uses these to automatically valudate requests
 # and generate API documentation
+class EEGReqest(BaseModel):
+    """
+    Shape of data the client send to /predict
+    signal: a 2D array of shape (641, 64)
+            641 timepoints * 64 EEG channe;s
+            sent as a nested list (JSON doesn't have numpy)
+            
+    """
+    signal = List[List[float]]
+    
+    
+class PredictionResponse(BaseModel):
+    """
+    Shape of data we send back to the client.
+    
+    """
+    prediction: str         # "Left fist" or "Right fist"
+    confidence: float       # probability of predicted class
+    label: int              # 0 or 1
+    scores: List[float]     # raw model output scores
+    
+    
+
+    
+    
 
 
