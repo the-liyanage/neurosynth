@@ -44,7 +44,7 @@ app.add_middleware(
 # coming IN and going OUT of our API endpoints
 # FastAPI uses these to automatically valudate requests
 # and generate API documentation
-class EEGReqest(BaseModel):
+class EEGRequest(BaseModel):
     """
     Shape of data the client send to /predict
     signal: a 2D array of shape (641, 64)
@@ -52,7 +52,7 @@ class EEGReqest(BaseModel):
             sent as a nested list (JSON doesn't have numpy)
             
     """
-    signal = List[List[float]]
+    signal: List[List[float]]
     
     
 class PredictionResponse(BaseModel):
@@ -68,6 +68,116 @@ class PredictionResponse(BaseModel):
     
 
     
+# ----------- ENDPOINT 1: health check
+@app.get("/")
+def health_check():
+    """
+    simple health check endpoint.
+    returns a message confirming the server is running.
+    
+    used by deployment platforms( Railway) to verify
+    the service is alive.
+    
+    """
+    return {
+        "status": "online",
+        "message": "NeuroSynth API is running",
+        "model": "EEG Transformer (`61.1%` accuracy)",
+        "classes": list(LABELS.values())
+        
+    }
+    
+# ---------- ENDPOINT 2. REST prediction
+@app.post("/predict", response_model = PredictionResponse)
+def predict_endpoint(request: EEGRequest):
+    """
+    takes a preprocessed EEG signal and returns a prediction.
+    
+    Why REST (POST) and WebSocket?
+    REST ---> simple, stateless,
+             one request = one response
+             good for single predictions on demand 
+             
+    WebSocket ---> persistent connection, streams results continuously 
+                   good for real-time BCI where signals arrive constantly 
+                   
+                   
+    This endpoint is useful for:
+    - testing the model from curl or Postman
+    - the streamlit demo (which uses REST, not WebSocket)
+    - any client that doesn't need real-time streaming
+    
+    """
+    
+    
+    # convert the nestes list --> numpy array
+    signal = np.array(request.signal, dtype = np.float32)
+    # signal shape: (641, 64)
+    
+    # run inference
+    result = predict_from_raw(signal)
+    return result
+
+
+# -------- Endpoint 3: WebSocket real-time inference
+@app.websocket("/ws")
+async def websocket_endpoint(webscket: WebSocket):
+    """
+    WebSocket endpoint for real-time EEG inference.
+    
+    How WebSocket differs from REST:
+    REST:           client sends requests --> server responds --> connection closes
+    WebSocket:      connection stays OPEN --> client keeps sending signals
+                    server keeps sending predictions back
+                    no overhead of opening/ closing connection each time
+                    
+    
+    This is  what enables sub - 120 msn end to end latency
+    the persistent connection removes the connection setup
+    overhead that REST would add for each prediction,
+    
+    
+    Flow:
+    1. Client connects to ws://localhost:8000/ws
+    2. Client sends EEG signal as JSON string
+    3. Server runs inference sends prediction back as JSON
+    4. Repeat continuously util client disconnects
+    
+    """
+    
+    # accept the WebSocket connection
+    await webscket.accept()
+    print("WebSocket client connected!")
+    
+    try:
+        while True:
+            # wait for data from the client
+            data = await webscket.receive_text()
+            
+            # parse the JSON string into a Python dict
+            payload = json.loads(data)
+            
+            # extract the signal array
+            signal = np.array(payload["signal"], dtype = np.float32)
+            # signal shape: (641, 64)
+            
+            # run inference
+            result = predict_from_raw(signal)
+            
+            # send prediction back to client as JSON
+            await webscket.send_text(json.dumps(result))
+            
+            
+            
+    except WebSocketDisconnect:
+        # client disconneted - this is normal, not an error
+        print("WebSocket client disconnected")
+
+    except Exception as e:
+        # something went wrong - send error back to client
+        await webscket.send_text(json.dumps({
+            "error": str(e)
+        }))    
     
 
 
